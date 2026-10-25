@@ -36,3 +36,10 @@ Vérification : `curl https://VOTRE-URL/health`.
 - Le modèle est rechargé à chaque vidéo (plusieurs minutes par génération).
 - Les vidéos sont accessibles par leur lien secret, sans mot de passe, et ne sont pas supprimées automatiquement.
 - Code de l'API testé avec un faux `generate.py`, pas avec le vrai modèle sur GPU.
+
+## 3. Installer l'application sur téléphone (PWA)
+Une fois le site en ligne sur Vercel :
+- **Android (Chrome)** : ouvrir le site → menu ⋮ → *Installer l'application* (ou *Ajouter à l'écran d'accueil*).
+- **iPhone (Safari)** : ouvrir le site → bouton Partager → *Sur l'écran d'accueil*.
+
+L'icône apparaît comme une application et s'ouvre en plein écran. Elle se met à jour toute seule à chaque `git push`.

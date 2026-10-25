@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Générateur de vidéos Wan2.2</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#5b3df5">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Vidéos IA">
 <style>
   :root { --bg:#fff; --fg:#1a1a1a; --muted:#666; --line:#d8d8d8; --accent:#5b3df5; }
   @media (prefers-color-scheme: dark) { :root { --bg:#121212; --fg:#eee; --muted:#a0a0a0; --line:#333; --accent:#8f7bff; } }
@@ -84,6 +90,7 @@ goBtn.onclick = async () => {
   } catch (e) { say(e.message, true); }
   goBtn.disabled = false;
 };
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
 </script>
 </body>
 </html>
