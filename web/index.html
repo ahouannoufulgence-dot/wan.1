@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Générateur de vidéos Wan2.2</title>
+<style>
+  :root { --bg:#fff; --fg:#1a1a1a; --muted:#666; --line:#d8d8d8; --accent:#5b3df5; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#121212; --fg:#eee; --muted:#a0a0a0; --line:#333; --accent:#8f7bff; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 system-ui, sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  p.sub { color: var(--muted); margin: 0 0 24px; }
+  label { display:block; font-weight:600; margin: 16px 0 6px; }
+  textarea, input, select { width:100%; padding:10px; border:1px solid var(--line); border-radius:8px; background:transparent; color:inherit; font:inherit; }
+  textarea { min-height: 110px; resize: vertical; }
+  button { margin-top: 20px; padding: 12px 20px; border:0; border-radius:8px; background:var(--accent); color:#fff; font:inherit; font-weight:600; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  #status { margin-top: 20px; color: var(--muted); }
+  #status.err { color: #d33; }
+  video { width:100%; margin-top:16px; border-radius:8px; background:#000; }
+  a.dl { display:inline-block; margin-top:8px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Générateur de vidéos</h1>
+  <p class="sub">Décrivez une scène, la vidéo est générée par Wan2.2 (5 s environ, 24 images/s).</p>
+
+  <label for="code">Code d’accès</label>
+  <input id="code" type="password" autocomplete="off">
+
+  <label for="prompt">Description de la vidéo</label>
+  <textarea id="prompt" maxlength="1000" placeholder="Un chat roux marche sur une plage au coucher du soleil, plan large, lumière dorée"></textarea>
+
+  <label for="size">Format</label>
+  <select id="size">
+    <option value="1280*704">Paysage (1280×704)</option>
+    <option value="704*1280">Portrait (704×1280)</option>
+  </select>
+
+  <button id="go">Générer la vidéo</button>
+  <div id="status" role="status"></div>
+  <div id="result"></div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const statusEl = $("status"), resultEl = $("result"), goBtn = $("go");
+try { $("code").value = sessionStorage.getItem("code") || ""; } catch {}
+
+function say(msg, isErr) { statusEl.textContent = msg; statusEl.className = isErr ? "err" : ""; }
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, { ...opts, headers: { "Content-Type": "application/json", "x-access-code": $("code").value, ...(opts.headers || {}) } });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || "Erreur " + r.status);
+  return data;
+}
+
+goBtn.onclick = async () => {
+  resultEl.innerHTML = "";
+  goBtn.disabled = true;
+  try { sessionStorage.setItem("code", $("code").value); } catch {}
+  try {
+    say("Envoi de la demande…");
+    const { id } = await api("/api/jobs", { method: "POST", body: JSON.stringify({ prompt: $("prompt").value, size: $("size").value }) });
+    const t0 = Date.now();
+    for (;;) {
+      await wait(5000);
+      const j = await api("/api/jobs/" + id);
+      const s = Math.round((Date.now() - t0) / 1000);
+      if (j.status === "done") {
+        say("Terminée.");
+        const v = document.createElement("video"); v.src = j.videoUrl; v.controls = true; v.playsInline = true;
+        const a = document.createElement("a"); a.href = j.videoUrl; a.textContent = "Télécharger la vidéo"; a.className = "dl"; a.target = "_blank"; a.rel = "noopener";
+        resultEl.append(v, a);
+        break;
+      }
+      if (j.status === "error") throw new Error(j.error || "La génération a échoué");
+      say((j.status === "queued" ? "En attente…" : "Génération en cours…") + " " + s + " s (comptez plusieurs minutes)");
+    }
+  } catch (e) { say(e.message, true); }
+  goBtn.disabled = false;
+};
+</script>
+</body>
+</html>

@@ -5,3 +5,6 @@ tmp_examples*
 new_checkpoint*
 batch_test*
 nohup*
+# Génération locale
+server/outputs/
+Wan2.2-TI2V-5B/
