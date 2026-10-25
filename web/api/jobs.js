@@ -17,7 +17,9 @@ module.exports = async function handler(req, res) {
       body: JSON.stringify({ prompt: prompt.trim(), size: size === "704*1280" ? "704*1280" : "1280*704" }),
     });
     const data = await r.json().catch(() => ({}));
-    if (!r.ok) return res.status(r.status === 429 ? 429 : 502).json({ error: data.detail || "Erreur du serveur GPU" });
+    if (r.status === 429) return res.status(429).json({ error: "File d’attente pleine, réessayez plus tard" });
+    if (!r.ok || typeof data.id !== "string" || !/^[0-9a-f]{32}$/.test(data.id))
+      return res.status(502).json({ error: "Le serveur GPU n’a pas répondu correctement. Vérifiez GPU_API_URL et GPU_API_KEY." });
     return res.status(202).json({ id: data.id });
   } catch {
     return res.status(502).json({ error: "Serveur GPU injoignable" });
